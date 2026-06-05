@@ -14,111 +14,150 @@
 
 namespace galaxy
 {
-	namespace graphics
+	///
+	/// Abstraction for OpenGL vertex buffer objects.
+	///
+	class VertexBuffer final
 	{
+	public:
 		///
-		/// Abstraction for OpenGL vertex buffer objects.
+		/// Constructor.
 		///
-		class VertexBuffer final
-		{
-		  public:
-			///
-			/// Constructor.
-			///
-			VertexBuffer();
+		VertexBuffer();
 
-			///
-			/// Move constructor.
-			///
-			VertexBuffer(VertexBuffer&&);
+		///
+		/// Move constructor.
+		///
+		VertexBuffer(VertexBuffer&&) noexcept;
 
-			///
-			/// Move assignment operator.
-			///
-			VertexBuffer& operator=(VertexBuffer&&);
+		///
+		/// Move assignment operator.
+		///
+		VertexBuffer& operator=(VertexBuffer&&) noexcept;
 
-			///
-			/// Destructor.
-			///
-			~VertexBuffer();
+		///
+		/// Destructor.
+		///
+		~VertexBuffer();
 
-			///
-			/// Create vertex buffer object.
-			///
-			/// \param vertices Vertices to assign.
-			/// \param indicies Indices for vertex buffer.
-			///
-			void buffer(std::span<Vertex> vertices, std::span<unsigned int> indicies);
+		///
+		/// Create vertex buffer.
+		///
+		/// \param vertices Vertices to assign.
+		/// \param indices Indices for vertex buffer.
+		///
+		void buffer(std::span<Vertex> vertices, std::span<unsigned int> indices);
 
-			///
-			/// Create vertex data without uploading.
-			///
-			/// \param vertex_count Size of vertices.
-			/// \param indicies Indices for vertex buffer.
-			///
-			void buffer(const int vertex_count, std::span<unsigned int> indicies);
+		///
+		/// Create vertex buffer without uploading.
+		///
+		/// \param vertex_count Number of vertices.
+		/// \param index_count Number of indices.
+		///
+		void reserve(const int vertex_count, const int index_count);
 
-			///
-			/// Sub-buffer vertex object.
-			///
-			/// \param index Offset to start at from initial vertices. 0 = first element.
-			/// \param vertices Vertices to assign.
-			///
-			void sub_buffer(const unsigned int index, std::span<Vertex> vertices);
+		///
+		/// Sub-buffer vertex buffer.
+		///
+		/// \param vi Offset to start at from initial vertices. 0 = first.
+		/// \param vertex_size Amount of vertex data to sub buffer.
+		/// \param vertices Vertices to assign.
+		/// \param ei Offset to start at from initial indices. 0 = first.
+		/// \param index_size Amount of index data to sub buffer.
+		/// \param indices Indices to assign.
+		///
+		void sub_buffer(
+			const unsigned int      vi,
+			const int               vertex_size,
+			const std::span<Vertex> vertices,
+			const unsigned int      ei,
+			const int               index_size,
+			std::span<unsigned int> indices
+		) const;
 
-			///
-			/// Clear buffer data.
-			///
-			void clear();
+		///
+		/// Sub-buffer vertex buffer.
+		///
+		/// \param vi Offset to start at from initial vertices. 0 = first.
+		/// \param vertex_size Amount of vertex data to sub buffer.
+		/// \param vertices Vertices to assign.
+		///
+		void sub_buffer_vertices(const unsigned int vi, const int vertex_size, const std::span<Vertex> vertices) const;
 
-			///
-			/// Get the index count.
-			///
-			/// \return Integer.
-			///
-			[[nodiscard]] int count() const;
+		///
+		/// Sub-buffer element/index buffer.
+		///
+		/// \param ei Offset to start at from initial indices. 0 = first.
+		/// \param index_size Amount of index data to sub buffer.
+		/// \param indices Indices to assign.
+		///
+		void sub_buffer_indices(const unsigned int ei, const int index_size, std::span<unsigned int> indices) const;
 
-			///
-			/// Gets index offset.
-			///
-			/// \return Integer as void pointer for opengl shenanigans.
-			///
-			[[nodiscard]] void* offset();
+		///
+		/// Erase a specfic segment of data.
+		///
+		/// \param vi Offset to start at from initial vertices. 0 = first.
+		/// \param vertex_count Number of vertices.
+		/// \param ei Offset to start at from initial indices. 0 = first.
+		/// \param index_count Number of indices.
+		///
+		void erase(const unsigned int vi, const int vertex_count, const unsigned int ei, const int index_count) const;
 
-			///
-			/// Get OpenGL handle.
-			///
-			/// \return Unsigned integer.
-			///
-			[[nodiscard]] unsigned int id() const;
+		///
+		/// Clear buffer data.
+		///
+		void clear() const;
 
-		  private:
-			///
-			/// Copy constructor.
-			///
-			VertexBuffer(const VertexBuffer&) = delete;
-			///
-			/// Copy assignment operator.
-			///
-			VertexBuffer& operator=(const VertexBuffer&) = delete;
+		///
+		/// Get the index count.
+		///
+		/// \return Integer.
+		///
+		[[nodiscard]]
+		int count() const noexcept;
 
-		  private:
-			///
-			/// ID returned by OpenGL when generating buffer.
-			///
-			unsigned int m_id;
+		///
+		/// Gets index offset.
+		///
+		/// \return Integer as void pointer for opengl shenanigans.
+		///
+		[[nodiscard]]
+		void* offset() noexcept;
 
-			///
-			/// Index buffer offset.
-			///
-			std::size_t m_offset;
+		///
+		/// Get OpenGL handle.
+		///
+		/// \return Unsigned integer.
+		///
+		[[nodiscard]]
+		unsigned int id() const noexcept;
 
-			///
-			/// Index buffer count.
-			///
-			int m_count;
-		};
-	} // namespace graphics
+	private:
+		///
+		/// Copy constructor.
+		///
+		VertexBuffer(const VertexBuffer&) = delete;
+		///
+		/// Copy assignment operator.
+		///
+		VertexBuffer& operator=(const VertexBuffer&) = delete;
+
+	private:
+		///
+		/// ID returned by OpenGL when generating buffer.
+		///
+		unsigned int m_id;
+
+		///
+		/// Index buffer offset.
+		///
+		std::size_t m_offset;
+
+		///
+		/// Index buffer count.
+		///
+		int m_count;
+	};
 } // namespace galaxy
 
 #endif

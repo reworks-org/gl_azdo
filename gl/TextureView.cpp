@@ -7,62 +7,50 @@
 
 #include <glad/glad.h>
 
-#include "galaxy/utils/Globals.hpp"
-
 #include "TextureView.hpp"
-
-#ifdef GALAXY_WIN_PLATFORM
-#pragma warning(push)
-#pragma warning(disable : 26493)
-#endif
 
 namespace galaxy
 {
-	namespace graphics
+	TextureView::TextureView(
+		const unsigned int parent,
+		const unsigned int minlevel,
+		const unsigned int numlevels,
+		const unsigned int minlayer,
+		const unsigned int numlayers
+	) noexcept
 	{
-		TextureView::TextureView(const unsigned int parent,
-			const unsigned int                      minlevel,
-			const unsigned int                      numlevels,
-			const unsigned int                      minlayer,
-			const unsigned int                      numlayers)
-			: Texture {}
+		glGenTextures(1, &m_id);
+		glTextureView(m_id, GL_TEXTURE_2D, parent, GL_RGBA8, minlevel, numlevels, minlayer, numlayers);
+	}
+
+	TextureView::TextureView(TextureView&& t) noexcept
+	{
+		glDeleteTextures(1, &m_id);
+
+		this->m_id = t.m_id;
+		t.m_id     = 0;
+	}
+
+	TextureView& TextureView::operator=(TextureView&& t) noexcept
+	{
+		if (this != &t)
 		{
-			glGenTextures(1, &m_id);
-			glTextureView(m_id, GL_TEXTURE_2D, parent, GL_RGBA8, minlevel, numlevels, minlayer, numlayers);
+			glDeleteTextures(1, &m_id);
+
+			this->m_id = t.m_id;
+			t.m_id     = 0;
 		}
 
-		TextureView::TextureView(TextureView&& t)
-			: Texture {std::move(t)}
-		{
-		}
+		return *this;
+	}
 
-		TextureView& TextureView::operator=(TextureView&& t)
-		{
-			if (this != &t)
-			{
-				Texture::operator=(std::move(t));
-			}
+	TextureView::~TextureView() noexcept
+	{
+		glDeleteTextures(1, &m_id);
+	}
 
-			return *this;
-		}
-
-		TextureView::~TextureView()
-		{
-			// We don't need to destroy the view here.
-		}
-
-		void TextureView::bind()
-		{
-			glBindTexture(GL_TEXTURE_2D, m_id);
-		}
-
-		void TextureView::unbind()
-		{
-			glBindTexture(GL_TEXTURE_2D, 0);
-		}
-	} // namespace graphics
+	unsigned int TextureView::id() const noexcept
+	{
+		return m_id;
+	}
 } // namespace galaxy
-
-#ifdef GALAXY_WIN_PLATFORM
-#pragma warning(pop)
-#endif

@@ -11,45 +11,52 @@
 #include <array>
 
 #include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 
-#include "galaxy/meta/Memory.hpp"
+#include "galaxy/meta/Concepts.hpp"
 
 namespace galaxy
 {
-	namespace graphics
+	///
+	/// Represents a single vertex point.
+	///
+	struct Vertex final
 	{
 		///
-		/// Represents a single vertex point.
+		/// Position.
 		///
-		struct Vertex final
-		{
-			///
-			/// Position..
-			///
-			glm::vec2 m_pos;
+		glm::vec3 m_pos;
 
-			///
-			/// Texture coords.
-			///
-			glm::vec2 m_texels;
-		};
+		///
+		/// Texture coords (uv).
+		///
+		glm::vec2 m_texels;
 
+		///
+		/// Uniform data index.
+		///
+		unsigned int m_index = 0;
+	};
+
+	namespace graphics
+	{
 		///
 		/// Generate some default verticies.
 		///
 		/// \param width Width of quad.
 		/// \param height Height of quad.
+		/// \param depth Rendering layer. Clamped from -1.0 to 1.0.
 		///
 		/// \return Vertices mapped from TOP LEFT to BOTTOM LEFT CLOCKWISE.
 		///
-		std::array<Vertex, 4> gen_quad_vertices(const float width, const float height);
+		std::vector<Vertex> gen_quad_vertices(const float width, const float height, float depth) noexcept;
 
 		///
-		/// Generate some default indicies.
+		/// Generate some default indices.
 		///
 		/// \return Indices mapping vertices from TOP LEFT to BOTTOM LEFT CLOCKWISE.
 		///
-		std::array<unsigned int, 6> gen_default_indices();
+		std::vector<unsigned int> gen_default_indices() noexcept;
 
 		///
 		/// Takes in a x positon texture coord and maps it to a texel.
@@ -62,7 +69,8 @@ namespace galaxy
 		/// \return OpenGL shader compatible texel.
 		///
 		template<meta::is_arithmetic Type>
-		[[nodiscard]] inline float map_x_texel(const Type x, const float width)
+		[[nodiscard]]
+		inline float map_x_texel(const Type x, const float width) noexcept
 		{
 			return static_cast<float>(x) / width;
 		}
@@ -78,7 +86,8 @@ namespace galaxy
 		/// \return OpenGL shader compatible texel.
 		///
 		template<meta::is_arithmetic Type>
-		[[nodiscard]] inline float map_y_texel(const Type y, const float height)
+		[[nodiscard]]
+		inline float map_y_texel(const Type y, const float height) noexcept
 		{
 			return static_cast<float>(y) / height;
 		}

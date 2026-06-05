@@ -8,75 +8,70 @@
 #ifndef GALAXY_GRAPHICS_GL_TEXTUREVIEW_HPP_
 #define GALAXY_GRAPHICS_GL_TEXTUREVIEW_HPP_
 
-#include "galaxy/graphics/gl/Texture.hpp"
-
 namespace galaxy
 {
-	namespace graphics
+	///
+	/// OpenGL 2D TextureView.
+	///
+	class TextureView final
 	{
+	public:
 		///
-		/// OpenGL 2D TextureView.
+		/// Args constructor.
 		///
-		class TextureView final : public Texture
-		{
-		  public:
-			///
-			/// Args constructor.
-			///
-			/// \param parent Texture id of which to create a view from.
-			/// \param minlevel Mipmap level.
-			/// \param numlevels Number of mipmaps to include.
-			/// \param minlayer Specifies the index of the first layer to include in the view.
-			/// \param numlayers Specifies the number of layers to include in the view.
-			///
-			TextureView(const unsigned int parent,
-				const unsigned int         minlevel,
-				const unsigned int         numlevels,
-				const unsigned int         minlayer,
-				const unsigned int         numlayers);
+		/// \param parent Texture id of which to create a view from.
+		/// \param minlevel Mipmap level.
+		/// \param numlevels Number of mipmaps to include.
+		/// \param minlayer Specifies the index of the first layer to include in the view.
+		/// \param numlayers Specifies the number of layers to include in the view.
+		///
+		TextureView(const unsigned int parent, const unsigned int minlevel, const unsigned int numlevels, const unsigned int minlayer, const unsigned int numlayers) noexcept;
 
-			///
-			/// Move constructor.
-			///
-			TextureView(TextureView&&);
+		///
+		/// Move constructor.
+		///
+		TextureView(TextureView&&) noexcept;
 
-			///
-			/// Move assignment operator.
-			///
-			TextureView& operator=(TextureView&&);
+		///
+		/// Move assignment operator.
+		///
+		TextureView& operator=(TextureView&&) noexcept;
 
-			///
-			/// Destructor.
-			///
-			virtual ~TextureView();
+		///
+		/// Destructor.
+		///
+		~TextureView() noexcept;
 
-			///
-			/// Activate context.
-			///
-			void bind() override;
+		///
+		/// Get OpenGL texture id.
+		///
+		/// \return Unsigned int.
+		///
+		[[nodiscard]]
+		unsigned int id() const noexcept;
 
-			///
-			/// Deactivate context.
-			///
-			void unbind() override;
+	private:
+		///
+		/// Constructor.
+		///
+		TextureView() = delete;
 
-		  private:
-			///
-			/// Constructor.
-			///
-			TextureView() = delete;
+		///
+		/// Copy constructor.
+		///
+		TextureView(const TextureView&) = delete;
 
-			///
-			/// Copy constructor.
-			///
-			TextureView(const TextureView&) = delete;
+		///
+		/// Copy assignment operator.
+		///
+		TextureView& operator=(const TextureView&) = delete;
 
-			///
-			/// Copy assignment operator.
-			///
-			TextureView& operator=(const TextureView&) = delete;
-		};
-	} // namespace graphics
+	private:
+		///
+		/// Texture view id.
+		///
+		unsigned int m_id;
+	};
 } // namespace galaxy
 
 #endif

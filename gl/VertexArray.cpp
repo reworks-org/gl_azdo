@@ -7,183 +7,148 @@
 
 #include <glm/mat4x4.hpp>
 
-#include "galaxy/graphics/gl/Enums.hpp"
+#include "galaxy/graphics/gl/GLEnums.hpp"
+#include "galaxy/graphics/Enums.hpp"
 
 #include "VertexArray.hpp"
 
 namespace galaxy
 {
-	namespace graphics
+	VertexArray::VertexArray()
+		: m_id {0}
 	{
-		VertexArray::VertexArray()
-			: m_id {0}
-			, m_instances {1}
+		glCreateVertexArrays(1, &m_id);
+
+		// Bind vertex to 0 (vertex buffer bind point, different from attribute bind point).
+		// Then we bind the vbo as our ebo, since we are using a shared buffer.
+		glVertexArrayVertexBuffer(m_id, static_cast<unsigned int>(GLBufferLocation::VERTEX_BUFFER_POINT), m_vbo.id(), 0, sizeof(Vertex));
+		glVertexArrayElementBuffer(m_id, m_vbo.id());
+
+		// Enable each binding point for the vertex attributes.
+		glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(GLAttributeBinding::POSITION_POINT));
+		glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(GLAttributeBinding::TEXEL_POINT));
+		glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(GLAttributeBinding::INDEX_POINT));
+
+		// Specify each binding point for the vertex attributes.
+		// size (i.e. vec2, vec3, etc) floats not unsigned ints, not normalized, offset in data structure.
+		glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(GLAttributeBinding::POSITION_POINT), 3, GL_FLOAT, GL_FALSE, offsetof(Vertex, m_pos));
+		glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(GLAttributeBinding::TEXEL_POINT), 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, m_texels));
+		glVertexArrayAttribIFormat(m_id, static_cast<unsigned int>(GLAttributeBinding::INDEX_POINT), 1, GL_UNSIGNED_INT, offsetof(Vertex, m_index));
+
+		// VAO, attribute bind point, vertex buffer bind point.
+		glVertexArrayAttribBinding(m_id, static_cast<unsigned int>(GLAttributeBinding::POSITION_POINT), static_cast<unsigned int>(GLBufferLocation::VERTEX_BUFFER_POINT));
+		glVertexArrayAttribBinding(m_id, static_cast<unsigned int>(GLAttributeBinding::TEXEL_POINT), static_cast<unsigned int>(GLBufferLocation::VERTEX_BUFFER_POINT));
+		glVertexArrayAttribBinding(m_id, static_cast<unsigned int>(GLAttributeBinding::INDEX_POINT), static_cast<unsigned int>(GLBufferLocation::VERTEX_BUFFER_POINT));
+	}
+
+	VertexArray::VertexArray(VertexArray&& v) noexcept
+	{
+		if (this->m_id != 0)
 		{
-			glCreateVertexArrays(1, &m_id);
+			glDeleteVertexArrays(1, &this->m_id);
 		}
 
-		VertexArray::VertexArray(VertexArray&& v)
+		this->m_id  = v.m_id;
+		this->m_vbo = std::move(v.m_vbo);
+
+		v.m_id = 0;
+	}
+
+	VertexArray& VertexArray::operator=(VertexArray&& v) noexcept
+	{
+		if (this != &v)
 		{
 			if (this->m_id != 0)
 			{
 				glDeleteVertexArrays(1, &this->m_id);
 			}
 
-			this->m_id        = v.m_id;
-			this->m_vbo       = std::move(v.m_vbo);
-			this->m_instances = v.m_instances;
+			this->m_id  = v.m_id;
+			this->m_vbo = std::move(v.m_vbo);
 
 			v.m_id = 0;
 		}
 
-		VertexArray& VertexArray::operator=(VertexArray&& v)
+		return *this;
+	}
+
+	VertexArray::~VertexArray()
+	{
+		if (m_id != 0)
 		{
-			if (this != &v)
-			{
-				if (this->m_id != 0)
-				{
-					glDeleteVertexArrays(1, &this->m_id);
-				}
-
-				this->m_id        = v.m_id;
-				this->m_vbo       = std::move(v.m_vbo);
-				this->m_instances = v.m_instances;
-
-				v.m_id = 0;
-			}
-
-			return *this;
+			glDeleteVertexArrays(1, &m_id);
 		}
+	}
 
-		VertexArray::~VertexArray()
-		{
-			if (m_id != 0)
-			{
-				glDeleteVertexArrays(1, &m_id);
-			}
-		}
+	void VertexArray::buffer(std::span<Vertex> vertices, std::span<unsigned int> indices)
+	{
+		m_vbo.buffer(vertices, indices);
+	}
 
-		void VertexArray::buffer(std::span<Vertex> vertices, std::span<unsigned int> indicies)
-		{
-			m_vbo.buffer(vertices, indicies);
+	void VertexArray::reserve(const int vertex_count, const int index_count)
+	{
+		m_vbo.reserve(vertex_count, index_count);
+	}
 
-			// Bind vertex to 0 (vertex buffer bind point, different from attribute bind point).
-			glVertexArrayVertexBuffer(m_id, static_cast<unsigned int>(BufferBinding::VERTEX_BUFFER_POINT), m_vbo.id(), 0, sizeof(Vertex));
-			glVertexArrayElementBuffer(m_id, m_vbo.id());
+	void VertexArray::sub_buffer(
+		const unsigned int      vi,
+		const int               vertex_size,
+		const std::span<Vertex> vertices,
+		const unsigned int      ei,
+		const int               index_size,
+		std::span<unsigned int> indices
+	)
+	{
+		m_vbo.sub_buffer(vi, vertex_size, vertices, ei, index_size, indices);
+	}
 
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::POSITION_POINT)); // Pos
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::TEXEL_POINT));    // Texels
+	void VertexArray::sub_buffer_vertices(const unsigned int vi, const int vertex_size, const std::span<Vertex> vertices) const
+	{
+		m_vbo.sub_buffer_vertices(vi, vertex_size, vertices);
+	}
 
-			// bind point, size (i.e. vec2, vec3, etc) floats not unsigned ints, not normalized, offset in data structure.
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::POSITION_POINT), 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, m_pos));
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::TEXEL_POINT), 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, m_texels));
+	void VertexArray::sub_buffer_indices(const unsigned int ei, const int index_size, std::span<unsigned int> indices) const
+	{
+		m_vbo.sub_buffer_indices(ei, index_size, indices);
+	}
 
-			// VAO, attribute bind point, vertex buffer bind point.
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::POSITION_POINT),
-				static_cast<unsigned int>(BufferBinding::VERTEX_BUFFER_POINT));
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::TEXEL_POINT),
-				static_cast<unsigned int>(BufferBinding::VERTEX_BUFFER_POINT));
-		}
+	void VertexArray::erase(const unsigned int vi, const int vertex_count, const unsigned int ei, const int index_count)
+	{
+		m_vbo.erase(vi, vertex_count, ei, index_count);
+	}
 
-		void VertexArray::buffer(const int vertex_count, std::span<unsigned int> indicies)
-		{
-			m_vbo.buffer(vertex_count, indicies);
+	void VertexArray::clear()
+	{
+		m_vbo.clear();
+	}
 
-			// Bind vertex to 0 (, different from attribute bind point).
-			glVertexArrayVertexBuffer(m_id, static_cast<unsigned int>(BufferBinding::VERTEX_BUFFER_POINT), m_vbo.id(), 0, sizeof(Vertex));
-			glVertexArrayElementBuffer(m_id, m_vbo.id());
+	void VertexArray::bind() const
+	{
+		glBindVertexArray(m_id);
+	}
 
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::POSITION_POINT)); // Pos
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::TEXEL_POINT));    // Texels
+	void VertexArray::unbind() const
+	{
+		glBindVertexArray(0);
+	}
 
-			// bind point, size (i.e. vec2, vec3, etc) floats not unsigned ints, not normalized, offset in data structure.
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::POSITION_POINT), 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, m_pos));
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::TEXEL_POINT), 2, GL_FLOAT, GL_FALSE, offsetof(Vertex, m_texels));
+	int VertexArray::count() const noexcept
+	{
+		return m_vbo.count();
+	}
 
-			// VAO, attribute bind point, vertex buffer bind point.
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::POSITION_POINT),
-				static_cast<unsigned int>(BufferBinding::VERTEX_BUFFER_POINT));
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::TEXEL_POINT),
-				static_cast<unsigned int>(BufferBinding::VERTEX_BUFFER_POINT));
-		}
+	void* VertexArray::offset() noexcept
+	{
+		return m_vbo.offset();
+	}
 
-		void VertexArray::sub_buffer(const unsigned int index, std::span<Vertex> vertices)
-		{
-			m_vbo.sub_buffer(index, vertices);
-		}
+	VertexBuffer& VertexArray::vbo() noexcept
+	{
+		return m_vbo;
+	}
 
-		void VertexArray::set_instanced(const InstanceBuffer& ib)
-		{
-			m_instances = ib.amount();
-
-			glVertexArrayVertexBuffer(m_id, static_cast<unsigned int>(BufferBinding::INSTANCE_BUFFER_POINT), ib.id(), 0, sizeof(glm::mat4));
-
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT));
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 1u);
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 2u);
-			glEnableVertexArrayAttrib(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 3u);
-
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT), 4, GL_FLOAT, GL_FALSE, 0);
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 1u, 4, GL_FLOAT, GL_FALSE, (sizeof(glm::vec4)));
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 2u, 4, GL_FLOAT, GL_FALSE, (2 * sizeof(glm::vec4)));
-			glVertexArrayAttribFormat(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 3u, 4, GL_FLOAT, GL_FALSE, (3 * sizeof(glm::vec4)));
-
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::OFFSET_POINT),
-				static_cast<unsigned int>(BufferBinding::INSTANCE_BUFFER_POINT));
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 1u,
-				static_cast<unsigned int>(BufferBinding::INSTANCE_BUFFER_POINT));
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 2u,
-				static_cast<unsigned int>(BufferBinding::INSTANCE_BUFFER_POINT));
-			glVertexArrayAttribBinding(m_id,
-				static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 3u,
-				static_cast<unsigned int>(BufferBinding::INSTANCE_BUFFER_POINT));
-
-			glVertexArrayBindingDivisor(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT), 1);
-			glVertexArrayBindingDivisor(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 1u, 1);
-			glVertexArrayBindingDivisor(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 2u, 1);
-			glVertexArrayBindingDivisor(m_id, static_cast<unsigned int>(AttributeBinding::OFFSET_POINT) + 3u, 1);
-		}
-
-		void VertexArray::bind()
-		{
-			glBindVertexArray(m_id);
-		}
-
-		void VertexArray::unbind()
-		{
-			glBindVertexArray(0);
-		}
-
-		int VertexArray::count() const
-		{
-			return m_vbo.count();
-		}
-
-		void* VertexArray::offset()
-		{
-			return m_vbo.offset();
-		}
-
-		int VertexArray::instances() const
-		{
-			return m_instances;
-		}
-
-		VertexBuffer& VertexArray::vbo()
-		{
-			return m_vbo;
-		}
-
-		unsigned int VertexArray::id() const
-		{
-			return m_id;
-		}
-	} // namespace graphics
+	unsigned int VertexArray::id() const noexcept
+	{
+		return m_id;
+	}
 } // namespace galaxy

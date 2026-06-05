@@ -5,28 +5,40 @@
 /// Refer to LICENSE.txt for more details.
 ///
 
+#include <algorithm>
+
 #include "Vertex.hpp"
 
 namespace galaxy
 {
 	namespace graphics
 	{
-		std::array<Vertex, 4> gen_quad_vertices(const float width, const float height)
+		std::vector<Vertex> gen_quad_vertices(const float width, const float height, float depth) noexcept
 		{
+			depth = std::clamp(depth, -1.0f, 1.0f);
+
 			// clang-format off
-			const std::array<graphics::Vertex, 4> vertices = 
+			const std::vector<Vertex> vertices = 
 			{
-				graphics::Vertex {.m_pos =    glm::vec2 {0.0f, 0.0f}, 
-								  .m_texels = glm::vec2 {0.0f, 0.0f}
+				Vertex {
+					.m_pos    = glm::vec3 {0.0f, 0.0f, depth}, 
+					.m_texels = glm::vec2 {0.0f, 0.0f},
+					.m_index = 0
 				},
-				graphics::Vertex {.m_pos =    glm::vec2 {width, 0.0f},
-				                  .m_texels = glm::vec2 {1.0f, 0.0f}
+				Vertex {
+					.m_pos    = glm::vec3 {width, 0.0f, depth},
+				    .m_texels = glm::vec2 {1.0f, 0.0f},
+					.m_index = 0
 				},
-				graphics::Vertex {.m_pos =    glm::vec2 {width, height},
-				                  .m_texels = glm::vec2 {1.0f, 1.0f}
+				Vertex {
+					.m_pos    = glm::vec3 {width, height, depth},
+				    .m_texels = glm::vec2 {1.0f, 1.0f},
+					.m_index = 0
 				},
-				graphics::Vertex {.m_pos =    glm::vec2 {0.0f, height},
-				                  .m_texels = glm::vec2 {0.0f, 1.0f}
+				Vertex {
+					.m_pos    = glm::vec3 {0.0f, height, depth},
+				    .m_texels = glm::vec2 {0.0f, 1.0f},
+					.m_index = 0
 				}
 			};
 			// clang-format on
@@ -34,10 +46,9 @@ namespace galaxy
 			return vertices;
 		}
 
-		std::array<unsigned int, 6> gen_default_indices()
+		std::vector<unsigned int> gen_default_indices() noexcept
 		{
 			return {0u, 1u, 3u, 1u, 2u, 3u};
 		}
-
 	} // namespace graphics
 } // namespace galaxy

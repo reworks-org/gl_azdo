@@ -8,143 +8,162 @@
 #ifndef GALAXY_GRAPHICS_GL_VERTEXARRAY_HPP_
 #define GALAXY_GRAPHICS_GL_VERTEXARRAY_HPP_
 
-#include "galaxy/graphics/gl/InstanceBuffer.hpp"
 #include "galaxy/graphics/gl/VertexBuffer.hpp"
 
 namespace galaxy
 {
-	namespace graphics
+	///
+	/// Abstraction for OpenGL vertex array objects.
+	///
+	class VertexArray final
 	{
+	public:
 		///
-		/// Abstraction for OpenGL vertex array objects.
+		/// Constructor.
 		///
-		class VertexArray final
-		{
-		  public:
-			///
-			/// Constructor.
-			///
-			VertexArray();
+		VertexArray();
 
-			///
-			/// Move constructor.
-			///
-			VertexArray(VertexArray&&);
+		///
+		/// Move constructor.
+		///
+		VertexArray(VertexArray&&) noexcept;
 
-			///
-			/// Move assignment operator.
-			///
-			VertexArray& operator=(VertexArray&&);
+		///
+		/// Move assignment operator.
+		///
+		VertexArray& operator=(VertexArray&&) noexcept;
 
-			///
-			/// Destructor.
-			///
-			~VertexArray();
+		///
+		/// Destructor.
+		///
+		~VertexArray();
 
-			///
-			/// Create vertex array object.
-			///
-			/// \param vertices Vertices to assign.
-			/// \param indicies Indices for vertex buffer.
-			///
-			void buffer(std::span<Vertex> vertices, std::span<unsigned int> indicies);
+		///
+		/// Create vertex buffer.
+		///
+		/// \param vertices Vertices to assign.
+		/// \param indices Indices for vertex buffer.
+		///
+		void buffer(std::span<Vertex> vertices, std::span<unsigned int> indices);
 
-			///
-			/// Create vertex array without uploading data.
-			///
-			/// \param vertex_count Size of vertices.
-			/// \param indicies Indices for vertex buffer.
-			///
-			void buffer(const int vertex_count, std::span<unsigned int> indicies);
+		///
+		/// Create vertex buffer without uploading.
+		///
+		/// \param vertex_count Number of vertices.
+		/// \param index_count Number of indices.
+		///
+		void reserve(const int vertex_count, const int index_count);
 
-			///
-			/// Sub-buffer vertex array.
-			///
-			/// \param index Offset to start at from initial vertices. 0 = first element.
-			/// \param vertices Vertices to assign.
-			///
-			void sub_buffer(const unsigned int index, std::span<Vertex> vertices);
+		///
+		/// Sub-buffer vertex buffer.
+		///
+		/// \param vi Offset to start at from initial vertices. 0 = first.
+		/// \param vertex_size Amount of vertex data to sub buffer.
+		/// \param vertices Vertices to assign.
+		/// \param ei Offset to start at from initial indices. 0 = first.
+		/// \param index_size Amount of index data to sub buffer.
+		/// \param indices Indices to assign.
+		///
+		void
+		sub_buffer(const unsigned int vi, const int vertex_size, const std::span<Vertex> vertices, const unsigned int ei, const int index_size, std::span<unsigned int> indices);
 
-			///
-			/// Set this vertex array to use a specific instance buffer.
-			///
-			/// \param ib Instance buffer to use. Does not take ownership, you need to keep it around.
-			///
-			void set_instanced(const InstanceBuffer& ib);
+		///
+		/// Sub-buffer vertex buffer.
+		///
+		/// \param vi Offset to start at from initial vertices. 0 = first.
+		/// \param vertex_size Amount of vertex data to sub buffer.
+		/// \param vertices Vertices to assign.
+		///
+		void sub_buffer_vertices(const unsigned int vi, const int vertex_size, const std::span<Vertex> vertices) const;
 
-			///
-			/// Bind this vertex array.
-			///
-			void bind();
+		///
+		/// Sub-buffer element/index buffer.
+		///
+		/// \param ei Offset to start at from initial indices. 0 = first.
+		/// \param index_size Amount of index data to sub buffer.
+		/// \param indices Indices to assign.
+		///
+		void sub_buffer_indices(const unsigned int ei, const int index_size, std::span<unsigned int> indices) const;
 
-			///
-			/// Unbind this vertex array.
-			///
-			void unbind();
+		///
+		/// Erase a specfic segment of data.
+		///
+		/// \param vi Offset to start at from initial vertices. 0 = first.
+		/// \param vertex_count Number of vertices.
+		/// \param ei Offset to start at from initial indices. 0 = first.
+		/// \param index_count Number of indices.
+		///
+		void erase(const unsigned int vi, const int vertex_count, const unsigned int ei, const int index_count);
 
-			///
-			/// Get the index count.
-			///
-			/// \return Integer.
-			///
-			[[nodiscard]] int count() const;
+		///
+		/// Clear buffer data.
+		///
+		void clear();
 
-			///
-			/// Gets index offset.
-			///
-			/// \return Integer as void pointer for opengl shenanigans.
-			///
-			[[nodiscard]] void* offset();
+		///
+		/// Bind this vertex array.
+		///
+		void bind() const;
 
-			///
-			/// Number of instances to render.
-			///
-			/// \return Integer.
-			///
-			[[nodiscard]] int instances() const;
+		///
+		/// Unbind this vertex array.
+		///
+		void unbind() const;
 
-			///
-			/// Get vertex buffer.
-			///
-			/// \return Reference to vertex buffer object.
-			///
-			[[nodiscard]] VertexBuffer& vbo();
+		///
+		/// Get the index count.
+		///
+		/// \return Integer.
+		///
+		[[nodiscard]]
+		int count() const noexcept;
 
-			///
-			/// Get vertex array handle.
-			///
-			/// \return Unsigned int.
-			///
-			[[nodiscard]] unsigned int id() const;
+		///
+		/// Gets index offset.
+		///
+		/// \return Integer as void pointer for opengl shenanigans.
+		///
+		[[nodiscard]]
+		void* offset() noexcept;
 
-		  private:
-			///
-			/// Copy constructor.
-			///
-			VertexArray(const VertexArray&) = delete;
+		///
+		/// Get vertex buffer.
+		///
+		/// \return Reference to vertex buffer object.
+		///
+		[[nodiscard]]
+		VertexBuffer& vbo() noexcept;
 
-			///
-			/// Copy assignment operator.
-			///
-			VertexArray& operator=(const VertexArray&) = delete;
+		///
+		/// Get vertex array handle.
+		///
+		/// \return Unsigned int.
+		///
+		[[nodiscard]]
+		unsigned int id() const noexcept;
 
-		  private:
-			///
-			/// VAO object.
-			///
-			unsigned int m_id;
+	private:
+		///
+		/// Copy constructor.
+		///
+		VertexArray(const VertexArray&) = delete;
 
-			///
-			/// Vertex buffer.
-			///
-			VertexBuffer m_vbo;
+		///
+		/// Copy assignment operator.
+		///
+		VertexArray& operator=(const VertexArray&) = delete;
 
-			///
-			/// Number of instances.
-			///
-			int m_instances;
-		};
-	} // namespace graphics
+	private:
+		///
+		/// VAO object.
+		///
+		unsigned int m_id;
+
+		///
+		/// Vertex buffer.
+		///
+		VertexBuffer m_vbo;
+	};
 } // namespace galaxy
 
 #endif
